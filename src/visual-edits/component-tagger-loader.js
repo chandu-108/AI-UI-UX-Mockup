@@ -6,6 +6,7 @@ const parser_1 = require("@babel/parser");
 const magic_string_1 = require("magic-string");
 const estree_walker_1 = require("estree-walker");
 const path = require("path");
+const fs = require("fs");
 /* ───────────────────────────────────────────── Blacklists */
 const threeFiberElems = [
     "object3D",
@@ -378,6 +379,15 @@ function componentTagger(src, map) {
     try {
         if (/node_modules/.test(this.resourcePath))
             return done(null, src, map);
+        // If a directory path is passed (some Turbopack edge cases), skip processing.
+        try {
+            if (fs.existsSync(this.resourcePath) && fs.statSync(this.resourcePath).isDirectory()) {
+                return done(null, src, map);
+            }
+        }
+        catch (e) {
+            // If any fs error occurs, continue and let normal parsing handle it.
+        }
         const ast = (0, parser_1.parse)(src, {
             sourceType: 'module',
             plugins: ['jsx', 'typescript'],
